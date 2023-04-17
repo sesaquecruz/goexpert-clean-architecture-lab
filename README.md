@@ -1,1 +1,1 @@
-# goexpert-clean-architecture-lab
+# Clean Architecture Lab - Go Expert
