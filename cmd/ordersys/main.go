@@ -4,12 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	"net"
+	"net/http"
+	"sync"
 
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/config"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/entity"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/event"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/event/handler"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/infra/database"
+	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/infra/graphql"
+	gql_resolver "github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/infra/graphql/resolver"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/infra/grpc/pb"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/infra/grpc/service"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/usecase"
@@ -20,6 +24,9 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	gql_handler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 )
 
 func main() {
@@ -61,28 +68,57 @@ func main() {
 	handler := handler.NewOrderCreatedHandler(ch)
 	eventDispatcher.Register(event.EventOrderCreated, handler)
 
-	// UseCase
-	createOrder := usecase.NewCreateOrderUseCase(
+	// UseCases
+	createOrderUseCase := usecase.NewCreateOrderUseCase(
 		&entity.OrderFactory{},
 		orderRepository,
 		event.EventFactory{},
 		eventDispatcher,
 	)
 
-	listOrders := usecase.NewListOrdersUseCase(orderRepository)
+	listOrdersUseCase := usecase.NewListOrdersUseCase(orderRepository)
 
-	// gRCP
-	service := service.NewOrderService(createOrder, listOrders)
+	//
+	// Services
+	//
+	wg := &sync.WaitGroup{}
+
+	// gRCP Service
+	service := service.NewOrderService(createOrderUseCase, listOrdersUseCase)
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterOrderServiceServer(grpcServer, service)
 	reflection.Register(grpcServer)
 
-	fmt.Println("gRPC server is running on port", cfg.GRPCServerPort)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.GRPCServerPort))
 	if err != nil {
 		panic(err)
 	}
 
-	grpcServer.Serve(lis)
+	fmt.Println("gRPC server is running on port", cfg.GRPCServerPort)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		grpcServer.Serve(lis)
+	}()
+
+	// GraphQL Service
+	graphQLServer := gql_handler.NewDefaultServer(graphql.NewExecutableSchema(graphql.Config{
+		Resolvers: &gql_resolver.Resolver{
+			CreateOrderUseCase: createOrderUseCase,
+			ListOrdersUseCase:  listOrdersUseCase,
+		},
+	}))
+
+	graphQLHttpServer := http.NewServeMux()
+	graphQLHttpServer.Handle("/", playground.Handler("GraphQL Playground", "/order"))
+	graphQLHttpServer.Handle("/order", graphQLServer)
+
+	fmt.Println("GraphQL server is running on port", cfg.GRAPHQLServerPort)
+	wg.Add(1)
+	go func() {
+		http.ListenAndServe(fmt.Sprintf(":%s", cfg.GRAPHQLServerPort), graphQLHttpServer)
+	}()
+
+	wg.Wait()
 }
