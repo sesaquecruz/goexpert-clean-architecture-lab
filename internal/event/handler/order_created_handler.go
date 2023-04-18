@@ -4,17 +4,23 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/event"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/infra/rabbitmq"
+	ev "github.com/sesaquecruz/goexpert-clean-architecture-lab/pkg/event"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type OrderCreatedHandler struct {
-	rabbitmqChannel rabbitmq.RabbitMqChannel
+	RabbitmqChannel rabbitmq.RabbitMqChannel
 }
 
-func (h *OrderCreatedHandler) Handle(ctx context.Context, event event.Event) error {
+func NewOrderCreatedHandler(rabbitmqChannel rabbitmq.RabbitMqChannel) *OrderCreatedHandler {
+	return &OrderCreatedHandler{
+		RabbitmqChannel: rabbitmqChannel,
+	}
+}
+
+func (h *OrderCreatedHandler) Handle(ctx context.Context, event ev.EventInterface) error {
 	payload, err := json.Marshal(event.GetPayload())
 	if err != nil {
 		return err
@@ -25,7 +31,7 @@ func (h *OrderCreatedHandler) Handle(ctx context.Context, event event.Event) err
 		Body:        payload,
 	}
 
-	err = h.rabbitmqChannel.PublishWithContext(
+	err = h.RabbitmqChannel.PublishWithContext(
 		ctx,
 		"amq.direct",
 		"",
