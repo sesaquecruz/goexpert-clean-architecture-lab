@@ -9,13 +9,13 @@ import (
 	ev "github.com/sesaquecruz/goexpert-clean-architecture-lab/pkg/event"
 )
 
-type OrderInputDTO struct {
+type CreateOrderInputDTO struct {
 	Price float64 `json:"price"`
 	Tax   float64 `json:"tax"`
 }
 
-type OrderOutputDTO struct {
-	ID         string  `json:"id"`
+type CreateOrderOutputDTO struct {
+	Id         string  `json:"id"`
 	Price      float64 `json:"price"`
 	Tax        float64 `json:"tax"`
 	FinalPrice float64 `json:"final_price"`
@@ -42,7 +42,7 @@ func NewCreateOrderUseCase(
 	}
 }
 
-func (u *CreateOrderUseCase) Execute(ctx context.Context, input OrderInputDTO) (*OrderOutputDTO, error) {
+func (u *CreateOrderUseCase) Execute(ctx context.Context, input CreateOrderInputDTO) (*CreateOrderOutputDTO, error) {
 	order, err := u.OrderFactory.NewOrder(input.Price, input.Tax)
 	if err != nil {
 		return nil, err
@@ -52,12 +52,12 @@ func (u *CreateOrderUseCase) Execute(ctx context.Context, input OrderInputDTO) (
 		return nil, err
 	}
 
-	if err := u.OrderRepository.Save(ctx, *order); err != nil {
+	if err := u.OrderRepository.Save(ctx, order); err != nil {
 		return nil, err
 	}
 
-	output := OrderOutputDTO{
-		ID:         order.Id.String(),
+	output := CreateOrderOutputDTO{
+		Id:         order.Id.String(),
 		Price:      order.Price,
 		Tax:        order.Tax,
 		FinalPrice: order.FinalPrice,
