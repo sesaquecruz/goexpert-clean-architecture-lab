@@ -14,6 +14,7 @@ type config struct {
 	AMQPUser          string `mapstructure:"AMQP_USER"`
 	AMQPPassword      string `mapstructure:"AMQP_PASSWORD"`
 	GRPCServerPort    string `mapstructure:"GRPC_SERVER_PORT"`
+	RESTServerPort    string `mapstructure:"REST_SERVER_PORT"`
 	GRAPHQLServerPort string `mapstructure:"GRAPHQL_SERVER_PORT"`
 }
 

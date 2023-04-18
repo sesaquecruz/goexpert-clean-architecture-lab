@@ -16,6 +16,7 @@ import (
 	gql_resolver "github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/infra/graphql/resolver"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/infra/grpc/pb"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/infra/grpc/service"
+	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/infra/web"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/usecase"
 	ev "github.com/sesaquecruz/goexpert-clean-architecture-lab/pkg/event"
 
@@ -24,6 +25,8 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	"github.com/go-chi/chi/v5"
 
 	gql_handler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -83,7 +86,7 @@ func main() {
 	//
 	wg := &sync.WaitGroup{}
 
-	// gRCP Service
+	// gRCP
 	service := service.NewOrderService(createOrderUseCase, listOrdersUseCase)
 
 	grpcServer := grpc.NewServer()
@@ -102,7 +105,23 @@ func main() {
 		grpcServer.Serve(lis)
 	}()
 
-	// GraphQL Service
+	// Rest
+	orderWebHandlers := web.NewOrderWebHandlers(createOrderUseCase, listOrdersUseCase)
+
+	router := chi.NewRouter()
+	router.Route("/order", func(r chi.Router) {
+		r.Post("/", orderWebHandlers.CreateOrderHandler)
+		r.Get("/", orderWebHandlers.ListOrdersHandler)
+	})
+
+	fmt.Println("Rest server is running on port", cfg.RESTServerPort)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		http.ListenAndServe(fmt.Sprintf(":%s", cfg.RESTServerPort), router)
+	}()
+
+	// GraphQL
 	graphQLServer := gql_handler.NewDefaultServer(graphql.NewExecutableSchema(graphql.Config{
 		Resolvers: &gql_resolver.Resolver{
 			CreateOrderUseCase: createOrderUseCase,
@@ -117,8 +136,10 @@ func main() {
 	fmt.Println("GraphQL server is running on port", cfg.GRAPHQLServerPort)
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		http.ListenAndServe(fmt.Sprintf(":%s", cfg.GRAPHQLServerPort), graphQLHttpServer)
 	}()
 
+	// Waiting services
 	wg.Wait()
 }
