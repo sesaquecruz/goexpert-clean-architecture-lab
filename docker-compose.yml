@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  mysql:
+    image: mysql:8.0.32
+    hostname: mysql
+    container_name: mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_PASSWORD=user
+    volumes:
+      - ./migrations/sql:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+
+  rabbitmq:
+    image: rabbitmq:3.9.29-management
+    hostname: rabbitmq
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "15692:15692"
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=user
+      - RABBITMQ_DEFAULT_VHOST=/
+
+  app:
+    build: .
+    hostname: app
+    container_name: app
+    depends_on:
+      - mysql
+      - rabbitmq
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    volumes:
+      - .:/app
