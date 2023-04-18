@@ -29,7 +29,7 @@ func (u *ListOrdersUseCase) Execute(ctx context.Context) ([]*ListOrdersOutputDTO
 		return nil, err
 	}
 
-	var output []*ListOrdersOutputDTO
+	output := make([]*ListOrdersOutputDTO, 0)
 	for _, order := range orders {
 		out := ListOrdersOutputDTO{
 			Id:         order.Id.String(),
