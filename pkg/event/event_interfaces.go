@@ -15,6 +15,6 @@ type EventDispatcherInterface interface {
 	Register(eventName string, handler EventHandlerInterface) error
 	Remove(eventName string, handler EventHandlerInterface) error
 	Has(eventName string, handler EventHandlerInterface) bool
-	Dispatch(ctx context.Context, event EventInterface) error
+	Dispatch(ctx context.Context, event EventInterface) []error
 	Clear()
 }
