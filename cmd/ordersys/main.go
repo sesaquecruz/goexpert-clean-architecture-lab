@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/config"
 	"github.com/sesaquecruz/goexpert-clean-architecture-lab/internal/entity"
@@ -49,12 +52,22 @@ func main() {
 	}
 	defer db.Close()
 
+	err = waitForMySQL(context.Background(), db)
+	if err != nil {
+		panic(err)
+	}
+
 	// RabbitMQ
 	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s", cfg.AMQPUser, cfg.AMQPPassword, cfg.AMQPHost, cfg.AMQPPort))
 	if err != nil {
 		panic(err)
 	}
 	defer conn.Close()
+
+	err = waitForRabbitMQ(context.Background(), conn)
+	if err != nil {
+		panic(err)
+	}
 
 	ch, err := conn.Channel()
 	if err != nil {
@@ -142,4 +155,39 @@ func main() {
 
 	// Waiting services
 	wg.Wait()
+}
+
+func waitForMySQL(ctx context.Context, db *sql.DB) error {
+	for i := 0; i <= 30; {
+		if err := db.PingContext(ctx); err == nil {
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(1 * time.Second):
+			i++
+		}
+	}
+
+	return errors.New("unable to connect to the MySQL")
+}
+
+func waitForRabbitMQ(ctx context.Context, conn *amqp.Connection) error {
+	for i := 0; i <= 30; {
+		if ch, err := conn.Channel(); err == nil {
+			ch.Close()
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(1 * time.Second):
+			i++
+		}
+	}
+
+	return errors.New("unable to connect to the RabbitMQ")
 }
