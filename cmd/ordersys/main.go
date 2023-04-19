@@ -34,7 +34,7 @@ import (
 
 func main() {
 	// Configurations
-	cfg, err := config.LoadConfig(".")
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		panic(err)
 	}
