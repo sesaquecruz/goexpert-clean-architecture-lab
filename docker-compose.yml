@@ -29,6 +29,7 @@ services:
 
   ordersys:
     build: .
+    image: ordersys
     hostname: ordersys
     container_name: ordersys
     depends_on:
