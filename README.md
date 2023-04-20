@@ -31,6 +31,18 @@ docker compose up --build
 
 ## Usage
 
+### RabbitMQ
+
+1. Access and use (user, user) as credentials:
+
+```
+http://localhost:15672
+```
+
+2. Create a new queue with any name. E.g. **orders**.
+
+3. Bind the previously created queue with the exchange **amq.direct** using **order** as routing key.
+
 ### gRPC
 
 1. Use a gRPC client to connect on port 50051. Using [evans](https://github.com/ktr0731/evans) for example, run:
@@ -99,18 +111,6 @@ mutation createOrder {
   }
 }
 ```
-
-### RabbitMQ
-
-1. Access and use (user, user) as credentials:
-
-```
-http://localhost:15672
-```
-
-2. Create a new queue with any name.
-
-3. Bind the previously created queue with the exchange **amq.direct** using the routing key **order**.
 
 ## Troubleshooting
 
