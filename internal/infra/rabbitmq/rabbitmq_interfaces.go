@@ -6,7 +6,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type RabbitMqChannel interface {
+type RabbitMqChannelPublishInterface interface {
 	PublishWithContext(
 		ctx context.Context,
 		exchange string,
@@ -15,13 +15,4 @@ type RabbitMqChannel interface {
 		immediate bool,
 		msg amqp.Publishing,
 	) error
-
-	Consume(queue string,
-		consumer string,
-		autoAck bool,
-		exclusive bool,
-		noLocal bool,
-		noWait bool,
-		args amqp.Table,
-	) (<-chan amqp.Delivery, error)
 }

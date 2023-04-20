@@ -17,6 +17,8 @@ type Config struct {
 	AMQPPort          string `env:"AMQP_PORT"`
 	AMQPUser          string `env:"AMQP_USER"`
 	AMQPPassword      string `env:"AMQP_PASSWORD"`
+	AMQPExchange      string `env:"AMQP_EXCHANGE"`
+	AMQPKey           string `env:"AMQP_KEY"`
 	GRPCServerPort    string `env:"GRPC_SERVER_PORT"`
 	RESTServerPort    string `env:"REST_SERVER_PORT"`
 	GRAPHQLServerPort string `env:"GRAPHQL_SERVER_PORT"`
