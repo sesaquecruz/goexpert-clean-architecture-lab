@@ -33,7 +33,7 @@ docker compose up --build
 
 ### gRPC
 
-1. Use a gRPC client connect to the port 50051. Using [evans](https://github.com/ktr0731/evans) for example, run:
+1. Use a gRPC client to connect on port 50051. Using [evans](https://github.com/ktr0731/evans) for example, run:
 
 ```
 evans -r repl
@@ -62,7 +62,7 @@ curl -v http://localhost:8080/order
 2. To create a new order, run:
 
 ```
-curl -v -X POST http://localhost:8080/order -H "Content-Type: application/json" -d '{"Price": 23.00, "Tax": 0.23}
+curl -v -X POST http://localhost:8080/order -H "Content-Type: application/json" -d '{"Price": 23.00, "Tax": 0.23}'
 ```
 
 ### GraphQL
