@@ -81,7 +81,7 @@ func main() {
 	// Event Dispatcher
 	eventDispatcher := ev.NewEventDispatcher()
 
-	handler := handler.NewOrderCreatedHandler(ch)
+	handler := handler.NewOrderCreatedHandler(ch, cfg.AMQPExchange, cfg.AMQPKey)
 	eventDispatcher.Register(event.EventOrderCreated, handler)
 
 	// UseCases

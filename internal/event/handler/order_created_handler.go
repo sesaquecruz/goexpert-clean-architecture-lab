@@ -11,12 +11,20 @@ import (
 )
 
 type OrderCreatedHandler struct {
-	RabbitmqChannel rabbitmq.RabbitMqChannel
+	RabbitmqChannel rabbitmq.RabbitMqChannelPublishInterface
+	Exchange        string
+	Key             string
 }
 
-func NewOrderCreatedHandler(rabbitmqChannel rabbitmq.RabbitMqChannel) *OrderCreatedHandler {
+func NewOrderCreatedHandler(
+	rabbitmqChannel rabbitmq.RabbitMqChannelPublishInterface,
+	exchange string,
+	key string,
+) *OrderCreatedHandler {
 	return &OrderCreatedHandler{
 		RabbitmqChannel: rabbitmqChannel,
+		Exchange:        exchange,
+		Key:             key,
 	}
 }
 
@@ -33,8 +41,8 @@ func (h *OrderCreatedHandler) Handle(ctx context.Context, event ev.EventInterfac
 
 	err = h.RabbitmqChannel.PublishWithContext(
 		ctx,
-		"amq.direct",
-		"",
+		h.Exchange,
+		h.Key,
 		false,
 		false,
 		msg,
